@@ -61,7 +61,7 @@ func botTabContent() *fyne.Container {
 	logEntry.Wrapping = fyne.TextWrapWord
 
 	logScroll := container.NewVScroll(logEntry)
-	logScroll.SetMinSize(fyne.NewSize(0, 200)) // Minimum height
+	logScroll.SetMinSize(fyne.NewSize(0, 500)) // Minimum height
 
 	// Log renewal function
 	updateLog := func() {
