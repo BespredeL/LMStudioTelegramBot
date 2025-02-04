@@ -8,8 +8,6 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	"log"
-	"os"
 	"strconv"
 	"time"
 )
@@ -61,18 +59,20 @@ func botTabContent() *fyne.Container {
 	logEntry.Wrapping = fyne.TextWrapWord
 
 	logScroll := container.NewVScroll(logEntry)
-	logScroll.SetMinSize(fyne.NewSize(0, 500)) // Minimum height
+	logScroll.SetMinSize(fyne.NewSize(0, 550)) // Minimum height
 
 	// Log renewal function
 	updateLog := func() {
-		data, err := os.ReadFile("requests.log")
-		if err == nil {
-			logEntry.SetText(string(data))
-			logEntry.Refresh() // We update UI manually
+		dataLog, err := readLog()
+		if err != nil {
+			dataLog = "Error read log file"
 		}
+
+		logEntry.SetText(dataLog)
+		logEntry.Refresh() // We update UI manually
 	}
 
-	// Run the gorutin, which updates the log every 2 seconds
+	// Run the goroutines, which updates the log every 2 seconds
 	go func() {
 		ticker := time.NewTicker(2 * time.Second)
 		defer ticker.Stop()
@@ -158,12 +158,16 @@ func startGUI() {
 		config.APIAddress = apiAddressEntry.Text
 		if n, err := fmt.Sscanf(tokenLimitEntry.Text, "%d", &config.TokenLimit); n != 1 || err != nil {
 			dialog.ShowError(fmt.Errorf("the wrong value of the maximum number of tokens"), window)
+			logger.Error("The wrong value of the maximum number of tokens")
 			return
 		}
+
 		if n, err := fmt.Sscanf(timeoutEntry.Text, "%d", &config.PollingTimeout); n != 1 || err != nil {
 			dialog.ShowError(fmt.Errorf("the wrong meaning of the timeout"), window)
+			logger.Error("The wrong meaning of the timeout")
 			return
 		}
+
 		config.BotToken = botTokenEntry.Text
 		config.UpdateMethod = updateMethodSelect.Selected
 		config.WebhookDomain = webhookDomainEntry.Text
@@ -175,9 +179,12 @@ func startGUI() {
 
 		if err := saveConfig(); err != nil {
 			dialog.ShowError(fmt.Errorf("configuration conservation error: %v", err), window)
+			logger.Errorf("Configuration conservation error: %v", err)
 			return
 		}
+
 		dialog.ShowInformation(t("Success"), t("The configuration is saved!"), window)
+		logger.Info("The configuration is saved!")
 	})
 
 	configForm := container.NewVBox(
@@ -204,7 +211,7 @@ func startGUI() {
 	// --------------------------
 	modelSelect := widget.NewSelect([]string{}, func(val string) {
 		selectedModel = val
-		log.Printf("Selected model: %s", selectedModel)
+		logger.Infof("Selected model: %s", selectedModel)
 	})
 	modelSelect.PlaceHolder = t("Select a model")
 
@@ -212,6 +219,7 @@ func startGUI() {
 		models, err := fetchModels()
 		if err != nil {
 			dialog.ShowError(fmt.Errorf("error getting models: %v", err), window)
+			logger.Errorf("Error getting models: %v", err)
 			modelSelect.Options = []string{}
 			modelSelect.PlaceHolder = t("Error getting models")
 			modelSelect.Refresh()
@@ -235,6 +243,7 @@ func startGUI() {
 	refreshUsersTable := func() {
 		if err := loadUsers(); err != nil {
 			dialog.ShowError(fmt.Errorf("error loading users: %v", err), window)
+			logger.Errorf("Error loading users: %v", err)
 			return
 		}
 
@@ -254,8 +263,10 @@ func startGUI() {
 					user.Allowed = val
 				}
 				usersMutex.Unlock()
+
 				if err := saveUsers(); err != nil {
 					dialog.ShowError(fmt.Errorf("error saving users: %v", err), window)
+					logger.Errorf("Error saving users: %v", err)
 				}
 			})
 
@@ -265,7 +276,6 @@ func startGUI() {
 				widget.NewLabel(u.Username),
 				allowedCheck,
 			)
-
 			rows = append(rows, row)
 		}
 		usersTableContainer.Objects = rows

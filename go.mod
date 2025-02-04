@@ -5,6 +5,7 @@ go 1.23
 require (
 	fyne.io/fyne/v2 v2.5.4
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
+	github.com/sirupsen/logrus v1.8.1
 )
 
 require (

@@ -100,7 +100,7 @@ func convertToTelegramFormat(text string) string {
 	thinkRe := regexp.MustCompile(`(?s)<think>(.*?)</think>`)
 	text = thinkRe.ReplaceAllStringFunc(text, func(match string) string {
 		content := thinkRe.ReplaceAllString(match, "$1")
-		return "```code\n" + strings.TrimSpace(content) + "```"
+		return "```\n" + strings.TrimSpace(content) + "```"
 	})
 
 	// Markdown transformation into Telegram-compatible format
