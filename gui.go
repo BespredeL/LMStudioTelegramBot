@@ -15,6 +15,7 @@ import (
 func botTabContent() *fyne.Container {
 	botControlButton := widget.NewButton(t("Launch Telegram bot"), nil)
 	statusLabel := widget.NewLabel(t("The bot is not launched"))
+
 	var pollingStopChan chan struct{}
 	botRunning := false
 
@@ -58,6 +59,13 @@ func botTabContent() *fyne.Container {
 	logEntry := widget.NewMultiLineEntry()
 	logEntry.Wrapping = fyne.TextWrapWord
 
+	logUpdateButton := widget.NewButton(t("Update log"), nil)
+	logAutoUpdateRuning := true
+	logAutoUpdateCheck := widget.NewCheck(t("Auto-update log"), func(val bool) {
+		logAutoUpdateRuning = val
+	})
+	logAutoUpdateCheck.SetChecked(logAutoUpdateRuning)
+
 	logScroll := container.NewVScroll(logEntry)
 	logScroll.SetMinSize(fyne.NewSize(0, 510)) // Minimum height
 
@@ -72,17 +80,25 @@ func botTabContent() *fyne.Container {
 		logEntry.Refresh() // We update UI manually
 	}
 
-	// Run the goroutines, which updates the log every 2 seconds
-	go func() {
+	logUpdateButton.OnTapped = func() {
+		updateLog()
+	}
+
+	logTimer := func(runingUpdate *bool) {
 		ticker := time.NewTicker(2 * time.Second)
 		defer ticker.Stop()
 		for range ticker.C {
-			updateLog()
+			if *runingUpdate {
+				updateLog()
+			}
 		}
-	}()
+	}
+
+	// Run the goroutines, which updates the log every 2 seconds
+	go logTimer(&logAutoUpdateRuning)
 
 	botControlContainer := container.NewBorder(
-		container.NewVBox(botControlButton, statusLabel),
+		container.NewVBox(botControlButton, statusLabel, logAutoUpdateCheck, logUpdateButton),
 		nil, nil, nil,
 		logScroll,
 	)
