@@ -59,7 +59,7 @@ func botTabContent() *fyne.Container {
 	logEntry.Wrapping = fyne.TextWrapWord
 
 	logScroll := container.NewVScroll(logEntry)
-	logScroll.SetMinSize(fyne.NewSize(0, 550)) // Minimum height
+	logScroll.SetMinSize(fyne.NewSize(0, 510)) // Minimum height
 
 	// Log renewal function
 	updateLog := func() {
@@ -95,7 +95,7 @@ func startGUI() {
 	application := app.NewWithID("telegram.lmstudio.bot")
 	//application.Settings().SetTheme(theme.LightTheme())
 	window := application.NewWindow("Telegram Bot + LM Studio")
-	window.Resize(fyne.NewSize(800, 650))
+	window.Resize(fyne.NewSize(800, 600))
 
 	// --------------------------
 	// The Configuration tab
