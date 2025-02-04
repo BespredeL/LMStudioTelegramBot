@@ -6,12 +6,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
+
+const (
+	apiTimeout = 15 * 60 * time.Second
 )
 
 type LMRequest struct {
@@ -77,9 +80,14 @@ type LMModelsResponse struct {
 	Object string        `json:"object"`
 }
 
+// Creating a request URL
+func createURL(path string) string {
+	return strings.TrimRight(config.APIAddress, "/") + path
+}
+
 // Getting a list of models from LM Studio
 func fetchModels() ([]string, error) {
-	url := strings.TrimRight(config.APIAddress, "/") + "/models"
+	url := createURL("/models")
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("request error: %v", err)
@@ -88,21 +96,24 @@ func fetchModels() ([]string, error) {
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			log.Printf("error closing response: %v", err)
+			logger.Errorf("Error closing response: %v", err)
 		}
 	}(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("invalid status code: %d", resp.StatusCode)
 	}
+
 	var modelResponse LMModelsResponse
 	if err := json.NewDecoder(resp.Body).Decode(&modelResponse); err != nil {
 		return nil, fmt.Errorf("error parsing response: %v", err)
 	}
+
 	var models []string
 	for _, m := range modelResponse.Data {
 		models = append(models, m.ID)
 	}
+
 	return models, nil
 }
 
@@ -112,21 +123,23 @@ func callLMStudio(model string, conversation []LMMessage) (string, error) {
 		Model:    model,
 		Messages: conversation,
 	}
+
 	data, err := json.Marshal(reqBody)
 	if err != nil {
 		return "", err
 	}
 
-	url := strings.TrimRight(config.APIAddress, "/") + "/chat/completions"
-	client := &http.Client{Timeout: time.Second * 60 * 15}
+	url := createURL("/chat/completions")
+	client := &http.Client{Timeout: apiTimeout}
 	resp, err := client.Post(url, "application/json", bytes.NewBuffer(data))
+
 	if err != nil {
 		return "", fmt.Errorf("LM Studio request error: %v", err)
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			log.Printf("Error closing response: %v", err)
+			logger.Errorf("Error closing response: %v", err)
 		}
 	}(resp.Body)
 
@@ -160,8 +173,8 @@ func callLMStudioStream(model string, conversation []LMMessage, chatID int64) (s
 		return "", err
 	}
 
-	url := strings.TrimRight(config.APIAddress, "/") + "/chat/completions"
-	client := &http.Client{Timeout: time.Second * 60 * 15}
+	url := createURL("/chat/completions")
+	client := &http.Client{Timeout: apiTimeout}
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
 	if err != nil {
 		return "", err
@@ -176,7 +189,7 @@ func callLMStudioStream(model string, conversation []LMMessage, chatID int64) (s
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			log.Printf("Error closing response: %v", err)
+			logger.Errorf("Error closing response: %v", err)
 		}
 	}(resp.Body)
 
@@ -209,7 +222,7 @@ func callLMStudioStream(model string, conversation []LMMessage, chatID int64) (s
 
 		var chunk LMResponseChunk
 		if err := json.Unmarshal([]byte(line), &chunk); err != nil {
-			log.Printf("Chunk parsing error: %v", err)
+			logger.Errorf("Chunk parsing error: %v", err)
 			continue
 		}
 
@@ -217,7 +230,7 @@ func callLMStudioStream(model string, conversation []LMMessage, chatID int64) (s
 			partial := chunk.Choices[0].Delta.Content
 			fullResponse += partial
 			edit := tgbotapi.NewEditMessageText(chatID, sentMsg.MessageID, fullResponse)
-			edit.ParseMode = "MarkdownV2"
+			edit.ParseMode = tgParseMode
 			_, _ = bot.Request(edit)
 		}
 	}

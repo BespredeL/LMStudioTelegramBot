@@ -2,13 +2,13 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"os"
 	"sync"
 )
 
 // Config The structure of the configuration
 type Config struct {
+	// General parameters
 	APIAddress     string `json:"api_address"`
 	TokenLimit     int    `json:"token_limit"`
 	SystemRole     string `json:"system_role"`
@@ -18,7 +18,7 @@ type Config struct {
 	// Selecting the method of obtaining updates: "Polling" or "Webhook"
 	UpdateMethod string `json:"update_method"`
 
-	// Webhuk parameters (used if Updatemethod = "Webhook")
+	// Webhook parameters (used if Updatemethod = "Webhook")
 	WebhookDomain string `json:"webhook_domain"`
 	WebhookPort   string `json:"webhook_port"`
 	CertFile      string `json:"cert_file"`
@@ -30,6 +30,8 @@ type Config struct {
 	LMStudioMode string `json:"lm_studio_mode"`
 
 	Language string `json:"language"`
+	LogLevel string `json:"log_level"`
+	LogFile  string `json:"log_file"`
 }
 
 var (
@@ -78,16 +80,18 @@ func initConfig() {
 			WebhookPort:    "443",
 			CertFile:       "cert.pem",
 			KeyFile:        "key.pem",
-			LMStudioMode:   "full", // Values: "Stream" or "Full"
+			LMStudioMode:   "full", // Values: "stream" or "full"
 			Language:       "en",
+			LogLevel:       "debug",
+			LogFile:        "app.log",
 		}
 
 		if err := saveConfig(); err != nil {
-			log.Fatalf("Configuration conservation error: %v", err)
+			logger.Fatalf("Configuration conservation error: %v", err)
 		}
 	} else {
 		if err := loadConfig(); err != nil {
-			log.Fatalf("Configuration loading error: %v", err)
+			logger.Fatalf("Configuration loading error: %v", err)
 		}
 	}
 }

@@ -1,5 +1,9 @@
 # Telegram Bot + LM Studio
 
+[![Readme EN](https://img.shields.io/badge/README-EN-blue.svg)](https://github.com/bespredel/LMStudioTelegramBot/blob/master/README.md)
+[![Readme RU](https://img.shields.io/badge/README-RU-blue.svg)](https://github.com/bespredel/LMStudioTelegramBot/blob/master/README_RU.md)
+[![GitHub license](https://img.shields.io/badge/license-MIT-458a7b.svg)](https://github.com/bespredel/LMStudioTelegramBot/blob/master/LICENSE)
+
 This repository contains a Go application for running a Telegram bot integrated with LM Studio. The bot can be configured to use either polling or webhook methods to interact with users. It features a graphical user interface (GUI) built with the [Fyne framework](https://fyne.io/), allowing users to configure bot settings, select models, and manage users.
 
 ## Features
