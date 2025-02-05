@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"image/color"
 	"strconv"
 	"time"
 )
@@ -60,11 +63,11 @@ func botTabContent() *fyne.Container {
 	logEntry.Wrapping = fyne.TextWrapWord
 
 	logUpdateButton := widget.NewButton(t("Update log"), nil)
-	logAutoUpdateRuning := true
+	logAutoUpdateRunning := true
 	logAutoUpdateCheck := widget.NewCheck(t("Auto-update log"), func(val bool) {
-		logAutoUpdateRuning = val
+		logAutoUpdateRunning = val
 	})
-	logAutoUpdateCheck.SetChecked(logAutoUpdateRuning)
+	logAutoUpdateCheck.SetChecked(logAutoUpdateRunning)
 
 	logScroll := container.NewVScroll(logEntry)
 	logScroll.SetMinSize(fyne.NewSize(0, 510)) // Minimum height
@@ -84,21 +87,28 @@ func botTabContent() *fyne.Container {
 		updateLog()
 	}
 
-	logTimer := func(runingUpdate *bool) {
+	logTimer := func(runningUpdate *bool) {
 		ticker := time.NewTicker(2 * time.Second)
 		defer ticker.Stop()
 		for range ticker.C {
-			if *runingUpdate {
+			if *runningUpdate {
 				updateLog()
 			}
 		}
 	}
 
 	// Run the goroutines, which updates the log every 2 seconds
-	go logTimer(&logAutoUpdateRuning)
+	go logTimer(&logAutoUpdateRunning)
+
+	circle := canvas.NewCircle(color.White)
+	circle.StrokeColor = color.Gray{Y: 0x99}
+	circle.StrokeWidth = 5
 
 	botControlContainer := container.NewBorder(
-		container.NewVBox(botControlButton, statusLabel, logAutoUpdateCheck, logUpdateButton),
+		container.NewVBox(
+			container.NewHBox(circle, statusLabel, layout.NewSpacer(), botControlButton),
+			container.NewHBox(logAutoUpdateCheck, layout.NewSpacer(), logUpdateButton),
+		),
 		nil, nil, nil,
 		logScroll,
 	)
@@ -265,9 +275,9 @@ func startGUI() {
 
 		rows := []fyne.CanvasObject{
 			container.NewHBox(
+				widget.NewLabelWithStyle(t("Allowed"), fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 				widget.NewLabelWithStyle(t("ID"), fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 				widget.NewLabelWithStyle(t("Username"), fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-				widget.NewLabelWithStyle(t("Allowed"), fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 			),
 		}
 
@@ -288,9 +298,9 @@ func startGUI() {
 
 			allowedCheck.SetChecked(u.Allowed)
 			row := container.NewHBox(
+				allowedCheck,
 				widget.NewLabel(fmt.Sprintf("%d", u.ID)),
 				widget.NewLabel(u.Username),
-				allowedCheck,
 			)
 			rows = append(rows, row)
 		}
