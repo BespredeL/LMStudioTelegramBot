@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	"image/color"
 	"strconv"
 	"time"
 )
@@ -100,13 +98,9 @@ func botTabContent() *fyne.Container {
 	// Run the goroutines, which updates the log every 2 seconds
 	go logTimer(&logAutoUpdateRunning)
 
-	circle := canvas.NewCircle(color.White)
-	circle.StrokeColor = color.Gray{Y: 0x99}
-	circle.StrokeWidth = 5
-
 	botControlContainer := container.NewBorder(
 		container.NewVBox(
-			container.NewHBox(circle, statusLabel, layout.NewSpacer(), botControlButton),
+			container.NewHBox(statusLabel, layout.NewSpacer(), botControlButton),
 			container.NewHBox(logAutoUpdateCheck, layout.NewSpacer(), logUpdateButton),
 		),
 		nil, nil, nil,
