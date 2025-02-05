@@ -48,8 +48,6 @@ func updateConversationContext(chatID int64, role, content string) {
 		}
 	}
 
-	content = convertToTelegramFormat(content)
-
 	contexts[chatID] = append(contexts[chatID], LMMessage{Role: role, Content: content})
 	trimConversation(chatID)
 }
@@ -59,13 +57,6 @@ func updateConversationContextStream(chatID int64, role, content string) {
 	ctxMutex.Lock()
 	defer ctxMutex.Unlock()
 
-	if role == "clear" {
-		contexts[chatID] = []LMMessage{
-			{Role: "system", Content: config.SystemRole},
-		}
-		return
-	}
-
 	if _, ok := contexts[chatID]; !ok {
 		contexts[chatID] = []LMMessage{
 			{Role: "system", Content: config.SystemRole},
@@ -73,6 +64,13 @@ func updateConversationContextStream(chatID int64, role, content string) {
 	}
 
 	contexts[chatID] = append(contexts[chatID], LMMessage{Role: role, Content: content})
+}
+
+// Context clear
+func clearConversationContext(chatID int64) {
+	contexts[chatID] = []LMMessage{
+		{Role: "system", Content: config.SystemRole},
+	}
 }
 
 // Function of the sub-count "tokens" (example on the number of words)
@@ -104,13 +102,15 @@ func convertToTelegramFormat(text string) string {
 	})
 
 	// Markdown transformation into Telegram-compatible format
-	text = strings.ReplaceAll(text, "**", "*")  // Bold -> bold
-	text = strings.ReplaceAll(text, "__", "_")  // Emphasis -> italics
-	text = strings.ReplaceAll(text, "```", "`") // CODE blocks -> INLINE CODE
+	text = strings.ReplaceAll(text, "**", "*") // Bold -> bold
+	text = strings.ReplaceAll(text, "__", "_") // Emphasis -> italics
+	text = strings.ReplaceAll(text, "~~", "~") // Emphasis -> italics
 
 	// We remove the headlines of Markdown
-	//headingRe := regexp.MustCompile(`(?m)^#{1,6}\s*`)
-	//text = headingRe.ReplaceAllString(text, "")
+	headingRe := regexp.MustCompile(`(?m)^#{1,6}\s*`)
+	text = headingRe.ReplaceAllString(text, "")
+
+	logger.Debugf("convertToTelegramFormat: %v", text)
 
 	return text
 }

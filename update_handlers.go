@@ -60,6 +60,7 @@ func processUpdate(update tgbotapi.Update) {
 			_, _ = bot.Send(errMsg)
 			return
 		}
+		response = convertToTelegramFormat(response)
 		updateConversationContextStream(chatID, "assistant", response)
 	} else { // "full"
 		updateConversationContext(chatID, "user", userMessage)
@@ -84,6 +85,7 @@ func processUpdate(update tgbotapi.Update) {
 		deleteTypingMsg := tgbotapi.NewDeleteMessage(chatID, typingMsgID.MessageID)
 		_, _ = bot.Send(deleteTypingMsg)
 
+		response = convertToTelegramFormat(response)
 		updateConversationContext(chatID, "assistant", response)
 		respMsg := tgbotapi.NewMessage(chatID, response)
 		respMsg.ParseMode = tgParseMode
@@ -189,7 +191,7 @@ func commandHandler(update tgbotapi.Update) {
 		case "start":
 			msg.Text = t("Hello! I'm a Telegram bot that uses LM Studio.")
 		case "clear":
-			updateConversationContextStream(chatID, "clear", "")
+			clearConversationContext(chatID)
 			msg.Text = t("Chat history cleared.")
 		default:
 			msg.Text = t("I don't know that command")
